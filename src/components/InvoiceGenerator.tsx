@@ -142,18 +142,18 @@ export const InvoiceGenerator = () => {
   if(!isClient) return null
 
   return (
-    <div className=' justify-center mx-auto w-8/12 border shadow my-10 p-10 space-y-10'>
-      <div>
-        <input type="image" placeholder='LOGO' />
-      </div>
+    <div className=' justify-center mx-auto w-8/12 border shadow my-10 px-10 py-20 space-y-10'>
       <div className='flex justify-between'>
+        <div className=' px-5'>
+          <img src="/asset/LanceKit Logo.svg" width={180} alt="" />
+        </div>
+        <h2 className='px-10 text-4xl font-bold'>INVOICE</h2>
+      </div>
+      <div className=''>
         <div className=' w-1/3 space-y-2'>
           <Input name='ownerName' type='text' value={data.ownerName} placeholder='Your Name / Your Company' className=' border-0 cursor-pointer placeholder:italic' onChange={(event) => handleChangeData(event)}/>
           <Input name='ownerAddress' type='text' value={data.ownerAddress} placeholder='Address, City' className=' border-0 cursor-pointer placeholder:italic' onChange={(event) => handleChangeData(event)}/>
           <Input name='ownerCountry' type='text' value={data.ownerCountry} placeholder='Country' className=' border-0 cursor-pointer placeholder:italic' onChange={(event) => handleChangeData(event)}/>
-        </div>
-        <div className=' px-10 text-4xl font-bold'>
-          <h2>INVOICE</h2>
         </div>
       </div>
       <div className='flex justify-between'>
@@ -167,20 +167,20 @@ export const InvoiceGenerator = () => {
           <div></div>
           <div className='flex space-x-4 w-full align-middle'>
             <span className=' inline-block w-2/3 align-middle'>Invoice&nbsp;:</span>
-            <Input name='invoiceNumber' value={data.invoiceNumber} type='text' placeholder='Invoice Number' className='w-full border-0 cursor-pointer size placeholder:italic' onChange={(event) => handleChangeData(event)}/>
+            <Input name='invoiceNumber' value={data.invoiceNumber} type='text' placeholder='Invoice Number' className='w-full border-0 cursor-pointer size placeholder:italic justify-end' onChange={(event) => handleChangeData(event)}/>
           </div>
           <div className='flex space-x-4 w-full'>
             <p className='w-2/3'>Invoice Date&nbsp;:</p>
-            <Input name='invoiceDate' value={data.invoiceDate} type='date' placeholder='13/11/2023' className='w-full  cursor-pointer py-0' onChange={(event) => handleChangeData(event)}/>
+            <Input name='invoiceDate' value={data.invoiceDate} type='date' placeholder='13/11/2023' className='w-full  cursor-pointer py-0 justify-end' onChange={(event) => handleChangeData(event)}/>
           </div>
           <div className='flex space-x-4 w-full'>
             <p className='w-2/3'>Due Date&nbsp;:</p>
-            <Input name='dueDate' value={data.dueDate} type='date' placeholder='20/11/2023' className='w-full  cursor-pointer py-0' onChange={(event) => handleChangeData(event)}/>
+            <Input name='dueDate' value={data.dueDate} type='date' placeholder='20/11/2023' className='w-full  cursor-pointer py-0 justify-end' onChange={(event) => handleChangeData(event)}/>
           </div>
           
         </div>
       </div>
-      <div>
+      <div className=' space-y-4'>
         <Table>
           <TableCaption></TableCaption>
           <TableHeader>
@@ -203,9 +203,17 @@ export const InvoiceGenerator = () => {
                 </TableRow>
               )})}
           </TableBody>
-        </Table>
-        <Button onClick={addItems}>Add Item</Button>
-        <Button onClick={createPdf} >Generate PDF</Button>
+        </Table>  
+        <div className='grid grid-cols-4 gap-4 justify-end w-full'>
+          <div className=' col-span-2'></div>
+          <div className='text-end text-xl font-semibold'>TOTAL :</div>
+          <div className='text-center text-xl font-semibold'>999.000</div>
+        </div>
+        <div className='space-x-2'>
+          <Button onClick={addItems}>Add Item</Button>
+          <Button onClick={createPdf} >Generate PDF</Button>
+        </div>
+        
       </div>
     </div>
   )
