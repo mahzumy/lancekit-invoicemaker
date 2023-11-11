@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import pdfMake from "pdfmake/build/pdfmake";  
 import pdfFonts from "pdfmake/build/vfs_fonts";  
 pdfMake.vfs = pdfFonts.pdfMake.vfs;  
+import { TDocumentDefinitions } from "pdfmake/interfaces";
 
 export const InvoiceGenerator = () => {
   const [isClient, setIsClient] = useState(false)
@@ -80,11 +81,9 @@ export const InvoiceGenerator = () => {
     setInvoiceFields(values);
   };
 
-  const docDefinition = {
-
-    content: [  
-      // Previous configuration  
-      {  
+  const  docDefinition: TDocumentDefinitions = {
+    content:  [  
+     {  
         columns: [  
             [  
                 {  
@@ -123,18 +122,6 @@ export const InvoiceGenerator = () => {
           }  
       }  
   ],
-
-
-    // styles: {
-    //   header: {
-    //     fontSize: 22,
-    //     bold: true,
-    //   },
-    //   anotherStyle: {
-    //     italics: true,
-    //     alignment: 'right',
-    //   },
-    // },
     
   };
 
