@@ -19,7 +19,10 @@ pdfMake.vfs = pdfFonts.pdfMake.vfs;
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 
 export const InvoiceGenerator = () => {
+  const [url, setUrl] = useState("")
   const [isClient, setIsClient] = useState(false)
+  const [total, setTotal] = useState(0)
+  const [featuredImg, setFeatureImg] = useState("")
 
   const [data, setData] = useState({
     ownerName:'',
@@ -60,6 +63,7 @@ export const InvoiceGenerator = () => {
       values[index].amount = Number(values[index].qty) * Number(values[index].price)
     }
     setInvoiceFields(values);
+    setTotal(invoiceFields.reduce((sum: number, item)=>sum + item.amount,0))
     //console.log(invoiceFields);
   };
 
@@ -125,15 +129,197 @@ export const InvoiceGenerator = () => {
     
   };
 
+  const dd: TDocumentDefinitions = {
+    content: [
+      {
+        alignment: 'justify',
+        columns: [
+          {
+            image: 'lancekitlogo',
+                      width: 150    
+          },
+          {
+            text: 'INVOICE', style: 'titleInvoice'
+          }
+        ]
+      },
+      {text: data.ownerName, style: 'ownerName'},
+      {text: data.ownerAddress + ', ' + data.ownerCountry, style: 'pBreak1'},
+      {text: 'Bill to:', style: 'h3Italic'},
+      {
+        columns: [
+          {
+            width: '*',
+            text: data.clientName, style: 'billToName',
+          },
+          {
+            width: 90,
+            text: 'Invoice Date : ', style: 'pRight',
+          },
+          {
+            width: 70,
+            text: data.invoiceDate, style: 'pRight',
+          },
+        ]
+      },
+      {
+          alignment: 'justify',
+        columns: [
+          {
+            width: '*',
+            text: data.clientAddress + ', '+ data.clientCountry, style: 'pBreakItalic'
+          },
+          {
+            width: 90,
+            text: 'Invoice Number :', style: 'pRight',
+          },
+          {
+            width: 70,
+            text: data.invoiceNumber, style: 'pRight',
+          },
+        ]
+      },
+      {
+        style: 'tableExample',
+        table: {
+            headerRows: 1,
+            widths: [ '*', 'auto', 100, '*' ],
+          body: [
+              [{text: 'Product', style: 'tableHeader', border: [false, false, false, false],}, {text: 'Quantity', style: 'tableHeader', border: [true, false, false, false]}, {text: 'Price per Unit', style: 'tableHeader', border: [true, false, false, false]}, {text: 'Amount', style: 'tableHeader',  border: [true, false, false, false]}],
+              ...invoiceFields.map(({itemDescription, qty, price, amount}) => ([itemDescription, qty, price, amount])),
+              //[{text: 'Logo Design', style: 'tableCellLeft',}, {text: 1, style: 'tableCellCenter'}, {text: '3.000.000,-', style: 'tableCellCenter'}, {text:'3.000.000,-', style: 'tableCellRight'} ],
+            //[{text: 'Mockup Branding', style: 'tableCellLeft',}, {text: 10, style: 'tableCellCenter'}, {text: '5.00.000,-', style: 'tableCellCenter'}, {text:'5.000.000,-', style: 'tableCellRight'} ],
+            [{ text: 'Total', colSpan: 3 }, {}, {}, total]
+          ],
+        },
+        layout: {
+          hLineWidth: function (i: number, node) {
+            return (i === 0 || i === node.table.body.length) ? 1 : 1;
+          },
+          vLineWidth: function (i: number, node) {
+            return (i === 0 || i === node.table.widths?.length) ? 1 : 1;
+          },
+          hLineColor: function (i: number, node) {
+            return (i === 0 || i === node.table.body.length) ? '#bfdbfe' : '#bfdbfe';
+          },
+          vLineColor: function (i: number, node) {
+            return (i === 0 || i === node.table.widths?.length) ? '#bfdbfe' : '#bfdbfe';
+          },
+          paddingTop: function(i: number, node) { return 20; },
+          paddingLeft: function(i: number, node) { return 14; },
+          paddingRight: function(i: number, node) { return 14; },
+          // hLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
+          // vLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
+          // paddingLeft: function(i, node) { return 4; },
+          // paddingRight: function(i, node) { return 4; },
+          // paddingTop: function(i, node) { return 2; },
+          // paddingBottom: function(i, node) { return 2; },
+          // fillColor: function (rowIndex, node, columnIndex) { return null; }
+        }
+          
+      }
+      
+    ],
+    defaultStyle: {
+      columnGap: 100,
+      lineHeight: 2.5
+    },
+    styles: {
+          titleInvoice: {
+            fontSize: 28,
+            bold: true,
+            alignment: 'right',
+          },
+          ownerName: {
+            fontSize: 16,
+            bold: true,
+            lineHeight: 1.4,
+          },
+          pLeft: {
+            alignment: 'left',
+            lineHeight: 1.4,
+          },
+          pBreak1: {
+            alignment: 'left',
+            lineHeight: 4,
+          },
+          pBreakItalic: {
+            alignment: 'left',
+            lineHeight: 4,
+            italics: true,
+          },
+          pRight: {
+            alignment: 'right',
+            lineHeight: 1.6
+          },
+          h3: {
+            fontSize: 13,
+            bold: true,
+            lineHeight: 2,
+            color: '#2563eb'
+          },
+          h3Italic: {
+            fontSize: 13,
+            bold: true,
+            lineHeight: 2,
+            italics: true,
+            color: '#2563eb',
+          },
+          billToName: {
+            fontSize: 16,
+            bold: true,
+            lineHeight: 1.4,
+          },
+          tableExample: {
+        margin: [0, 5, 0, 15]
+      },
+      tableHeader: {
+          bold: true,
+          color: 'white',
+          fontSize: 13,
+          fillColor: '#2563eb',
+          alignment: 'center',
+      },
+      tableCellLeft: {
+          alignment: 'left',
+      },
+      tableCellCenter: {
+          alignment: 'center',
+      },
+      tableCellRight: {
+          alignment: 'right',
+      },
+          
+    },
+    images: {
+        //lancekitlogo: 'https://i.imgur.com/7fMUo7k.png',
+        lancekitlogo: featuredImg,
+        
+    },
+    pageMargins: [ 40, 60, 40, 60 ]
+      
+    
+  }
 
   const createPdf = () => {
-    const pdfGenerator = pdfMake.createPdf(docDefinition)
-    // pdfGenerator.getBlob((blob) => {
-    //   const url = URL.createObjectURL(blob);
-    //   setUrl(url)
-    // })
-    pdfGenerator.download()
+    const pdfGenerator = pdfMake.createPdf(dd)
+    pdfGenerator.getBlob((blob) => {
+      const url: string = URL.createObjectURL(blob);
+      setUrl(url)
+    })
+    //pdfGenerator.download()
     //console.log(invoiceFields)
+  }
+
+  const handleFeturedImgChange = (event: React.ChangeEvent<HTMLInputElement>) =>{
+    const files: any = event.target.files
+    const file: string = files[0]
+
+    const fileReader: any = new FileReader();
+    fileReader.onload = () => {
+      setFeatureImg(fileReader.result)
+    }
+    fileReader.readAsDataURL(file)
   }
 
   useEffect(()=>{
@@ -146,6 +332,7 @@ export const InvoiceGenerator = () => {
       <div className='flex justify-between'>
         <div className=' px-5'>
           <img src="/asset/LanceKit Logo.svg" width={180} alt="" />
+          <Input type='file' onChange={handleFeturedImgChange}/>
         </div>
         <h2 className='px-10 text-4xl font-bold'>INVOICE</h2>
       </div>
@@ -207,11 +394,16 @@ export const InvoiceGenerator = () => {
         <div className='grid grid-cols-4 gap-4 justify-end w-full'>
           <div className=' col-span-2'></div>
           <div className='text-end text-xl font-semibold'>TOTAL :</div>
-          <div className='text-center text-xl font-semibold'>999.000</div>
+          <div className='text-center text-xl font-semibold'>{total}</div>
         </div>
         <div className='space-x-2'>
           <Button onClick={addItems}>Add Item</Button>
           <Button onClick={createPdf} >Generate PDF</Button>
+            {url && (
+              <div>
+                {url}
+              </div>
+            )}
         </div>
         
       </div>
