@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import { useState, useEffect } from 'react'
-import { Input } from "@/components/ui/input"
+import { Input } from "@/components/invoiceMaker/ui/input"
 import {
   Table,
   TableBody,
@@ -10,8 +10,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from '@/components/ui/button'
+} from "@/components/invoiceMaker/ui/table"
+import { Button } from '@/components/invoiceMaker/ui/button'
 
 import pdfMake from "pdfmake/build/pdfmake";  
 import pdfFonts from "pdfmake/build/vfs_fonts";  
