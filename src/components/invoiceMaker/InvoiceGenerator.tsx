@@ -2,6 +2,8 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/invoiceMaker/ui/input";
+import { Button } from "@/components/invoiceMaker/ui/button";
+import { z } from "zod";
 import {
   Table,
   TableBody,
@@ -11,21 +13,62 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/invoiceMaker/ui/table";
-import { Button } from "@/components/invoiceMaker/ui/button";
 
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import Image from "next/image";
+import { error } from "console";
+
+const dataSchema = z.object({
+  ownerName: z.string().min(1, "Owner Name"),
+  ownerAddress: z.string().min(1, "Owner Address"),
+  ownerCountry: z.string().min(1, "Owner Country"),
+  clientName: z.string().min(1),
+  clientAddress: z.string().min(1),
+  clientCountry: z.string().min(1),
+  invoiceNumber: z.string().min(1),
+  invoiceDate: z.string().min(1),
+  dueDate: z.string().min(1),
+  invoiceFields: z.array(
+    z.object({
+      itemDescription: z.string().min(1, "Descrtiptions"),
+      price: z.string().min(1, "Price"),
+      qty: z.string().min(1, "Qty"),
+      amount: z.number().min(1),
+    })
+  ),
+});
+
+interface IError {
+  ownerName?: string;
+  ownerAddress?: string;
+  ownerCountry?: string;
+  clientName?: string;
+  clientAddress?: string;
+  clientCountry?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  dueDate?: string;
+  invoiceFields?: [
+    {
+      itemDescription?: string;
+      price?: string;
+      qty?: string;
+      amount?: string;
+    }
+  ];
+}
+
+type TData = z.infer<typeof dataSchema>;
 
 export const InvoiceGenerator = () => {
   const [url, setUrl] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [total, setTotal] = useState(0);
   const [featuredImg, setFeatureImg] = useState("");
-
-  const [data, setData] = useState({
+  const [err, setErr] = useState({
     ownerName: "",
     ownerAddress: "",
     ownerCountry: "",
@@ -35,16 +78,35 @@ export const InvoiceGenerator = () => {
     invoiceNumber: "",
     invoiceDate: "",
     dueDate: "",
+    invoiceFields: [
+      {
+        itemDescription: "",
+        price: "",
+        qty: "",
+        amount: "",
+      },
+    ],
   });
 
-  const [invoiceFields, setInvoiceFields] = useState([
-    {
-      itemDescription: "",
-      price: "",
-      qty: "",
-      amount: 0,
-    },
-  ]);
+  const [data, setData] = useState<TData>({
+    ownerName: "",
+    ownerAddress: "",
+    ownerCountry: "",
+    clientName: "",
+    clientAddress: "",
+    clientCountry: "",
+    invoiceNumber: "",
+    invoiceDate: "",
+    dueDate: "",
+    invoiceFields: [
+      {
+        itemDescription: "",
+        price: "",
+        qty: "",
+        amount: 0,
+      },
+    ],
+  });
 
   const handleChangeData = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -56,7 +118,7 @@ export const InvoiceGenerator = () => {
     index: number,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const values = [...invoiceFields];
+    const values = [...data.invoiceFields];
     if (event.target.name === "itemDescription") {
       values[index].itemDescription = event.target.value;
     } else if (event.target.name === "qty") {
@@ -68,31 +130,45 @@ export const InvoiceGenerator = () => {
       values[index].amount =
         Number(values[index].qty) * Number(values[index].price);
     }
-    setInvoiceFields(values);
-    setTotal(invoiceFields.reduce((sum: number, item) => sum + item.amount, 0));
+    setData({ ...data, invoiceFields: values });
+    // setInvoiceFields(values);
+    // setData({ ...data, invoiceField: invoiceFields });
+    setTotal(
+      data.invoiceFields.reduce((sum: number, item) => sum + item.amount, 0)
+    );
     //console.log(invoiceFields);
   };
 
   const addItems = () => {
-    setInvoiceFields([
-      ...invoiceFields,
-      {
-        itemDescription: "",
-        price: "",
-        qty: "",
-        amount: 0,
-      },
-    ]);
+    const addField = [...data.invoiceFields];
+    const addErrorFiled = [...err.invoiceFields];
+
+    addField.push({
+      itemDescription: "",
+      price: "",
+      qty: "",
+      amount: 0,
+    });
+    addErrorFiled.push({
+      itemDescription: "",
+      price: "",
+      qty: "",
+      amount: "",
+    });
+    setData({ ...data, invoiceFields: addField });
+    setErr({ ...err, invoiceFields: addErrorFiled });
   };
 
   const handleRemoveInvoice = (index: number) => {
-    const values = [...invoiceFields];
-    if (values.length === 1) {
+    const values = [...data.invoiceFields];
+    const errors = [...err.invoiceFields];
+    if (values.length === 1 || errors.length === 1) {
       return false;
     }
     values.splice(index, 1);
-    setInvoiceFields(values);
-    setTotal(invoiceFields.reduce((sum: number, item) => sum + item.amount, 0));
+    errors.splice(index, 1);
+    setData({ ...data, invoiceFields: values });
+    setErr({ ...err, invoiceFields: errors });
   };
 
   const docDefinition: TDocumentDefinitions = {
@@ -130,12 +206,14 @@ export const InvoiceGenerator = () => {
           widths: ["*", "auto", "auto", "auto"],
           body: [
             ["Product", "Price", "Quantity", "Amount"],
-            ...invoiceFields.map(({ itemDescription, qty, price, amount }) => [
-              itemDescription,
-              qty,
-              price,
-              amount,
-            ]),
+            ...data.invoiceFields.map(
+              ({ itemDescription, qty, price, amount }) => [
+                itemDescription,
+                qty,
+                price,
+                amount,
+              ]
+            ),
             //[{ text: 'Total Amount', colSpan: 3 }, {}, {}, this.invoice.products.reduce((sum, p) => sum + (p.qty * p.price), 0).toFixed(2)]
           ],
         },
@@ -228,12 +306,14 @@ export const InvoiceGenerator = () => {
                 border: [true, false, false, false],
               },
             ],
-            ...invoiceFields.map(({ itemDescription, qty, price, amount }) => [
-              itemDescription,
-              qty,
-              price,
-              amount,
-            ]),
+            ...data.invoiceFields.map(
+              ({ itemDescription, qty, price, amount }) => [
+                itemDescription,
+                qty,
+                price,
+                amount,
+              ]
+            ),
             //[{text: 'Logo Design', style: 'tableCellLeft',}, {text: 1, style: 'tableCellCenter'}, {text: '3.000.000,-', style: 'tableCellCenter'}, {text:'3.000.000,-', style: 'tableCellRight'} ],
             //[{text: 'Mockup Branding', style: 'tableCellLeft',}, {text: 10, style: 'tableCellCenter'}, {text: '5.00.000,-', style: 'tableCellCenter'}, {text:'5.000.000,-', style: 'tableCellRight'} ],
             [{ text: "Total", colSpan: 3 }, {}, {}, total],
@@ -355,13 +435,41 @@ export const InvoiceGenerator = () => {
   };
 
   const createPdf = () => {
-    const pdfGenerator = pdfMake.createPdf(dd);
-    pdfGenerator.getBlob((blob) => {
-      const url: string = URL.createObjectURL(blob);
-      setUrl(url);
-    });
-    //pdfGenerator.download()
-    //console.log(invoiceFields)
+    try {
+      const isValidData = dataSchema.parse(data);
+      const pdfGenerator = pdfMake.createPdf(dd);
+      pdfGenerator.getBlob((blob) => {
+        const url: string = URL.createObjectURL(blob);
+        setUrl(url);
+      });
+      //pdfGenerator.download()
+      //console.log(invoiceFields)
+    } catch (error) {
+      const newError = error as z.ZodError;
+      let i = 0;
+      const temp = [...err.invoiceFields];
+
+      newError.issues.map((e) => {
+        if (e.path[0] !== "invoiceFields") {
+          const fieldName = e.path[0];
+          // console.log(tempError);
+          setErr({ ...err, [fieldName]: e.message });
+        } else {
+          temp[i].itemDescription = e.message;
+          temp[i].qty = e.message;
+          temp[i].price = e.message;
+          // setErr({ ...err, invoiceFields : temp });
+          if (e.path[2] === "amount") {
+            i++;
+          }
+        }
+      });
+
+      setErr({ ...err, invoiceFields: temp });
+      console.log(err);
+
+      // console.log(er.errors.map((e) => e.path));
+    }
   };
 
   const handleFeturedImgChange = (
@@ -379,7 +487,10 @@ export const InvoiceGenerator = () => {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    setTotal(
+      data.invoiceFields.reduce((sum: number, item) => sum + item.amount, 0)
+    );
+  }, [data.invoiceFields]);
   if (!isClient) return null;
 
   return (
@@ -433,6 +544,9 @@ export const InvoiceGenerator = () => {
             className=" border-0 cursor-pointer placeholder:italic"
             onChange={(event) => handleChangeData(event)}
           />
+          {/* { ? (
+            <p className="text-red-500">{err.ownerName}</p>
+          ) : null} */}
           <Input
             name="ownerAddress"
             type="text"
@@ -530,56 +644,58 @@ export const InvoiceGenerator = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoiceFields.map(({ itemDescription, price, qty, amount }, i) => {
-              return (
-                <TableRow className="" key={i}>
-                  <TableCell>
-                    {" "}
-                    <input
-                      onChange={(event) => handleChange(i, event)}
-                      name="itemDescription"
-                      type="text"
-                      value={itemDescription}
-                      placeholder=" Your item here "
-                      className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {" "}
-                    <input
-                      onChange={(event) => handleChange(i, event)}
-                      name="qty"
-                      type="number"
-                      value={qty}
-                      placeholder=" 25 "
-                      className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {" "}
-                    <input
-                      onChange={(event) => handleChange(i, event)}
-                      name="price"
-                      type="number"
-                      value={price}
-                      placeholder=" 4 "
-                      className="w-full text-md h-fit py-2 placeholder-slate-600"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {" "}
-                    <input
-                      name="amount"
-                      type="number"
-                      value={amount}
-                      placeholder="0"
-                      className=" read-only:bg-slate-400 text-right placeholder-slate-600"
-                    />
-                  </TableCell>
-                  <Button onClick={() => handleRemoveInvoice(i)}>X</Button>
-                </TableRow>
-              );
-            })}
+            {data.invoiceFields.map(
+              ({ itemDescription, price, qty, amount }, i) => {
+                return (
+                  <TableRow className="" key={i}>
+                    <TableCell>
+                      {" "}
+                      <input
+                        onChange={(event) => handleChange(i, event)}
+                        name="itemDescription"
+                        type="text"
+                        value={itemDescription}
+                        placeholder=" Your item here "
+                        className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {" "}
+                      <input
+                        onChange={(event) => handleChange(i, event)}
+                        name="qty"
+                        type="number"
+                        value={qty}
+                        placeholder=" 25 "
+                        className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {" "}
+                      <input
+                        onChange={(event) => handleChange(i, event)}
+                        name="price"
+                        type="number"
+                        value={price}
+                        placeholder=" 4 "
+                        className="w-full text-md h-fit py-2 placeholder-slate-600"
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {" "}
+                      <input
+                        name="amount"
+                        type="number"
+                        value={amount}
+                        placeholder="0"
+                        className=" read-only:bg-slate-400 text-right placeholder-slate-600"
+                      />
+                    </TableCell>
+                    <Button onClick={() => handleRemoveInvoice(i)}>X</Button>
+                  </TableRow>
+                );
+              }
+            )}
           </TableBody>
         </Table>
         <div className="grid grid-cols-4 gap-4 justify-end w-full">
