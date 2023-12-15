@@ -601,7 +601,7 @@ export const InvoiceGenerator = () => {
             onChange={(event) => handleChangeData(event)}
           />
           {err.clientCountry ? (
-            <p className="text-xs text-red-500">{err.ownerCountry}</p>
+            <p className="text-xs text-red-500">{err.clientCountry}</p>
           ) : null}
         </div>
         <div className=" inline-block align-middle w-2/5 space-y-4 mr-10">
