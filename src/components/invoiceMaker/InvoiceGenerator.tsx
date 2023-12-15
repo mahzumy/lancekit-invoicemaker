@@ -19,7 +19,6 @@ import pdfFonts from "pdfmake/build/vfs_fonts";
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 import { TDocumentDefinitions } from "pdfmake/interfaces";
 import Image from "next/image";
-import { error } from "console";
 
 const dataSchema = z.object({
   ownerName: z.string().min(1, "Owner Name"),
@@ -41,24 +40,24 @@ const dataSchema = z.object({
   ),
 });
 
+interface IinvoiceField {
+  itemDescription: string;
+  price: string;
+  qty: string;
+  amount: string;
+}
+
 interface IError {
-  ownerName?: string;
-  ownerAddress?: string;
-  ownerCountry?: string;
-  clientName?: string;
-  clientAddress?: string;
-  clientCountry?: string;
-  invoiceNumber?: string;
-  invoiceDate?: string;
-  dueDate?: string;
-  invoiceFields?: [
-    {
-      itemDescription?: string;
-      price?: string;
-      qty?: string;
-      amount?: string;
-    }
-  ];
+  ownerName: string;
+  ownerAddress: string;
+  ownerCountry: string;
+  clientName: string;
+  clientAddress: string;
+  clientCountry: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  invoiceFields: IinvoiceField[];
 }
 
 type TData = z.infer<typeof dataSchema>;
@@ -68,7 +67,7 @@ export const InvoiceGenerator = () => {
   const [isClient, setIsClient] = useState(false);
   const [total, setTotal] = useState(0);
   const [featuredImg, setFeatureImg] = useState("");
-  const [err, setErr] = useState({
+  const [err, setErr] = useState<IError>({
     ownerName: "",
     ownerAddress: "",
     ownerCountry: "",
@@ -111,6 +110,7 @@ export const InvoiceGenerator = () => {
   const handleChangeData = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setData({ ...data, [name]: value });
+    setErr({ ...err, [name]: "" });
     //console.log(data)
   };
 
@@ -119,20 +119,23 @@ export const InvoiceGenerator = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const values = [...data.invoiceFields];
+    const temp: any = [...err.invoiceFields];
     if (event.target.name === "itemDescription") {
       values[index].itemDescription = event.target.value;
+      temp[index].itemDescription = "";
     } else if (event.target.name === "qty") {
       values[index].qty = event.target.value;
       values[index].amount =
         Number(values[index].qty) * Number(values[index].price);
+      temp[index].qty = "";
     } else if (event.target.name === "price") {
       values[index].price = event.target.value;
       values[index].amount =
         Number(values[index].qty) * Number(values[index].price);
+      temp[index].price = "";
     }
     setData({ ...data, invoiceFields: values });
-    // setInvoiceFields(values);
-    // setData({ ...data, invoiceField: invoiceFields });
+    setErr({ ...err, invoiceFields: temp });
     setTotal(
       data.invoiceFields.reduce((sum: number, item) => sum + item.amount, 0)
     );
@@ -446,29 +449,22 @@ export const InvoiceGenerator = () => {
       //console.log(invoiceFields)
     } catch (error) {
       const newError = error as z.ZodError;
-      let i = 0;
-      const temp = [...err.invoiceFields];
+      const newErr: any = { ...err };
+      const temp: any = [...err.invoiceFields];
 
       newError.issues.map((e) => {
-        if (e.path[0] !== "invoiceFields") {
-          const fieldName = e.path[0];
-          // console.log(tempError);
-          setErr({ ...err, [fieldName]: e.message });
+        const fieldName = e.path[0];
+
+        if (fieldName !== "invoiceFields") {
+          newErr[fieldName] = e.message;
         } else {
-          temp[i].itemDescription = e.message;
-          temp[i].qty = e.message;
-          temp[i].price = e.message;
-          // setErr({ ...err, invoiceFields : temp });
-          if (e.path[2] === "amount") {
-            i++;
-          }
+          const index: any = e.path[1];
+          const field: any = e.path[2];
+          temp[index][field] = e.message;
         }
+        setErr({ ...newErr, invoiceFields: temp });
       });
-
-      setErr({ ...err, invoiceFields: temp });
-      console.log(err);
-
-      // console.log(er.errors.map((e) => e.path));
+      // console.log(err);
     }
   };
 
@@ -544,9 +540,9 @@ export const InvoiceGenerator = () => {
             className=" border-0 cursor-pointer placeholder:italic"
             onChange={(event) => handleChangeData(event)}
           />
-          {/* { ? (
-            <p className="text-red-500">{err.ownerName}</p>
-          ) : null} */}
+          {err.ownerName ? (
+            <p className="text-xs text-red-500">{err.ownerName}</p>
+          ) : null}
           <Input
             name="ownerAddress"
             type="text"
@@ -555,6 +551,9 @@ export const InvoiceGenerator = () => {
             className=" border-0 cursor-pointer placeholder:italic"
             onChange={(event) => handleChangeData(event)}
           />
+          {err.ownerAddress ? (
+            <p className="text-xs text-red-500">{err.ownerAddress}</p>
+          ) : null}
           <Input
             name="ownerCountry"
             type="text"
@@ -563,6 +562,9 @@ export const InvoiceGenerator = () => {
             className=" border-0 cursor-pointer placeholder:italic"
             onChange={(event) => handleChangeData(event)}
           />
+          {err.ownerCountry ? (
+            <p className="text-xs text-red-500">{err.ownerCountry}</p>
+          ) : null}
         </div>
       </div>
       <div className="flex justify-between">
@@ -576,6 +578,9 @@ export const InvoiceGenerator = () => {
             className=" border-0 cursor-pointer placeholder:italic"
             onChange={(event) => handleChangeData(event)}
           />
+          {err.clientName ? (
+            <p className="text-xs text-red-500">{err.clientName}</p>
+          ) : null}
           <Input
             name="clientAddress"
             value={data.clientAddress}
@@ -584,6 +589,9 @@ export const InvoiceGenerator = () => {
             className=" border-0 cursor-pointer placeholder:italic"
             onChange={(event) => handleChangeData(event)}
           />
+          {err.clientAddress ? (
+            <p className="text-xs text-red-500">{err.clientAddress}</p>
+          ) : null}
           <Input
             name="clientCountry"
             value={data.clientCountry}
@@ -592,6 +600,9 @@ export const InvoiceGenerator = () => {
             className=" border-0 cursor-pointer placeholder:italic"
             onChange={(event) => handleChangeData(event)}
           />
+          {err.clientCountry ? (
+            <p className="text-xs text-red-500">{err.ownerCountry}</p>
+          ) : null}
         </div>
         <div className=" inline-block align-middle w-2/5 space-y-4 mr-10">
           <div></div>
@@ -607,6 +618,9 @@ export const InvoiceGenerator = () => {
               className="w-full border-0 cursor-pointer size placeholder:italic justify-end"
               onChange={(event) => handleChangeData(event)}
             />
+            {err.invoiceNumber ? (
+              <p className="text-xs text-red-500">{err.invoiceNumber}</p>
+            ) : null}
           </div>
           <div className="flex space-x-4 w-full">
             <p className="w-2/3">Inv. Date&nbsp;:</p>
@@ -618,6 +632,9 @@ export const InvoiceGenerator = () => {
               className="w-full  cursor-pointer py-0 justify-end"
               onChange={(event) => handleChangeData(event)}
             />
+            {err.invoiceDate ? (
+              <p className="text-xs text-red-500">{err.invoiceDate}</p>
+            ) : null}
           </div>
           <div className="flex space-x-4 w-full">
             <p className="w-2/3">Due Date&nbsp;:</p>
@@ -629,6 +646,9 @@ export const InvoiceGenerator = () => {
               className="w-full  cursor-pointer py-0 justify-end"
               onChange={(event) => handleChangeData(event)}
             />
+            {err.dueDate ? (
+              <p className="text-xs text-red-500">{err.dueDate}</p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -658,6 +678,11 @@ export const InvoiceGenerator = () => {
                         placeholder=" Your item here "
                         className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
                       />
+                      {err.invoiceFields[i].itemDescription ? (
+                        <p className="text-xs text-red-500">
+                          {err.invoiceFields[i].itemDescription}
+                        </p>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       {" "}
@@ -669,6 +694,11 @@ export const InvoiceGenerator = () => {
                         placeholder=" 25 "
                         className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
                       />
+                      {err.invoiceFields[i].qty ? (
+                        <p className="text-xs text-red-500">
+                          {err.invoiceFields[i].qty}
+                        </p>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       {" "}
@@ -680,6 +710,11 @@ export const InvoiceGenerator = () => {
                         placeholder=" 4 "
                         className="w-full text-md h-fit py-2 placeholder-slate-600"
                       />
+                      {err.invoiceFields[i].price ? (
+                        <p className="text-xs text-red-500">
+                          {err.invoiceFields[i].price}
+                        </p>
+                      ) : null}
                     </TableCell>
                     <TableCell className="text-right">
                       {" "}
