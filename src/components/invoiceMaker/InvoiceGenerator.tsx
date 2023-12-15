@@ -111,7 +111,6 @@ export const InvoiceGenerator = () => {
     const { name, value } = event.target;
     setData({ ...data, [name]: value });
     setErr({ ...err, [name]: "" });
-    //console.log(data)
   };
 
   const handleChange = (
@@ -139,7 +138,6 @@ export const InvoiceGenerator = () => {
     setTotal(
       data.invoiceFields.reduce((sum: number, item) => sum + item.amount, 0)
     );
-    //console.log(invoiceFields);
   };
 
   const addItems = () => {
@@ -464,7 +462,6 @@ export const InvoiceGenerator = () => {
         }
         setErr({ ...newErr, invoiceFields: temp });
       });
-      // console.log(err);
     }
   };
 
