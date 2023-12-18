@@ -481,6 +481,10 @@ export const InvoiceGenerator = () => {
     fileReader.readAsDataURL(file);
   };
 
+  const removeLogo = () => {
+    setFeatureImg("");
+  };
+
   useEffect(() => {
     setIsClient(true);
     setTotal(
@@ -494,37 +498,47 @@ export const InvoiceGenerator = () => {
       <div className="flex justify-between">
         <div className=" px-5">
           {/* <img src="/asset/LanceKit Logo.svg" width={180} alt="" /> */}
-          <div className="flex items-center justify-center w-full">
-            <label
-              id="dropzone-file"
-              className="flex flex-col items-center justify-center w-full h-24 px-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-            >
-              <div className="flex flex-col items-center justify-center py-6 space-y-2">
-                <img src="/asset/upload-icon.svg" width={20} alt="" />
-                <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                  <span className="font-semibold">Click to upload</span> or drag
-                  and drop
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  SVG, PNG, JPG or GIF (MAX. 800x400px)
-                </p>
+
+          {featuredImg ? (
+            <div className="grid grid-cols-1">
+              <div className="relative w-[250px] h-[100px] mb-2">
+                <Image
+                  src={featuredImg}
+                  alt="Featured Image"
+                  fill
+                  className="object-scale-down rounded-xl"
+                />
               </div>
-              <Input
-                type="file"
+              <Button
+                className="flex items-center justify-center"
+                onClick={removeLogo}
+              >
+                Remove Logo
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center w-full">
+              <label
                 id="dropzone-file"
-                className="hidden"
-                onChange={handleFeturedImgChange}
-              />
-            </label>
-          </div>
-          {featuredImg && (
-            <div className="relative w-auto h-[100px]">
-              <Image
-                src={featuredImg}
-                alt="Featured Image"
-                fill
-                className="object-scale-down rounded-xl"
-              />
+                className="flex flex-col items-center justify-center w-full h-24 px-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+              >
+                <div className="flex flex-col items-center justify-center py-6 space-y-2">
+                  <img src="/asset/upload-icon.svg" width={20} alt="" />
+                  <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="font-semibold">Click to upload</span> or
+                    drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    SVG, PNG, JPG or GIF (MAX. 800x400px)
+                  </p>
+                </div>
+                <Input
+                  type="file"
+                  id="dropzone-file"
+                  className="hidden"
+                  onChange={handleFeturedImgChange}
+                />
+              </label>
             </div>
           )}
         </div>
