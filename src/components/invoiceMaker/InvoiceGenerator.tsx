@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/invoiceMaker/ui/input";
 import { Button } from "@/components/invoiceMaker/ui/button";
@@ -485,6 +486,8 @@ export const InvoiceGenerator = () => {
     setFeatureImg("");
   };
 
+  const { data: session } = useSession();
+
   useEffect(() => {
     setIsClient(true);
     setTotal(
@@ -494,270 +497,292 @@ export const InvoiceGenerator = () => {
   if (!isClient) return null;
 
   return (
-    <div className=" justify-center mx-auto w-8/12 border shadow my-10 px-10 py-20 space-y-10">
-      <div className="flex justify-between">
-        <div className=" px-5">
-          {/* <img src="/asset/LanceKit Logo.svg" width={180} alt="" /> */}
+    <main>
+      <div className="flex justify-between p-4">
+        <div className="text-lg font-bold">Lancekit.</div>
+        <div className="flex items-center gap-4">
+          <div>{session?.user?.name}</div>
+          <img
+            alt=""
+            src={session?.user?.image as string}
+            width={40}
+            height={40}
+            className="rounded-full"
+          />
+          <Button onClick={() => signOut()}>Logout</Button>
+        </div>
+      </div>
+      <div className=" justify-center mx-auto w-8/12 border shadow mb-10 px-10 py-20 space-y-10">
+        <div className="flex justify-between">
+          <div className=" px-5">
+            {/* <img src="/asset/LanceKit Logo.svg" width={180} alt="" /> */}
 
-          {featuredImg ? (
-            <div className="grid grid-cols-1">
-              <div className="relative w-[250px] h-[100px] mb-2">
-                <Image
-                  src={featuredImg}
-                  alt="Featured Image"
-                  fill
-                  className="object-scale-down rounded-xl"
-                />
-              </div>
-              <Button
-                className="flex items-center justify-center"
-                onClick={removeLogo}
-              >
-                Remove Logo
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center w-full">
-              <label
-                id="dropzone-file"
-                className="flex flex-col items-center justify-center w-full h-24 px-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-              >
-                <div className="flex flex-col items-center justify-center py-6 space-y-2">
-                  <img src="/asset/upload-icon.svg" width={20} alt="" />
-                  <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="font-semibold">Click to upload</span> or
-                    drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    SVG, PNG, JPG or GIF (MAX. 800x400px)
-                  </p>
+            {featuredImg ? (
+              <div className="grid grid-cols-1">
+                <div className="relative w-[250px] h-[100px] mb-2">
+                  <Image
+                    src={featuredImg}
+                    alt="Featured Image"
+                    fill
+                    className="object-scale-down rounded-xl"
+                  />
                 </div>
-                <Input
-                  type="file"
+                <Button
+                  className="flex items-center justify-center"
+                  onClick={removeLogo}
+                >
+                  Remove Logo
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center w-full">
+                <label
                   id="dropzone-file"
-                  className="hidden"
-                  onChange={handleFeturedImgChange}
-                />
-              </label>
-            </div>
-          )}
-        </div>
-        <h2 className="px-10 text-4xl font-bold align-middle">INVOICE</h2>
-      </div>
-      <div className="">
-        <div className=" w-1/3 space-y-2">
-          <Input
-            name="ownerName"
-            type="text"
-            value={data.ownerName}
-            placeholder="Your Name / Your Company"
-            className=" border-0 cursor-pointer placeholder:italic"
-            onChange={(event) => handleChangeData(event)}
-          />
-          {err.ownerName ? (
-            <p className="text-xs text-red-500">{err.ownerName}</p>
-          ) : null}
-          <Input
-            name="ownerAddress"
-            type="text"
-            value={data.ownerAddress}
-            placeholder="Address, City"
-            className=" border-0 cursor-pointer placeholder:italic"
-            onChange={(event) => handleChangeData(event)}
-          />
-          {err.ownerAddress ? (
-            <p className="text-xs text-red-500">{err.ownerAddress}</p>
-          ) : null}
-          <Input
-            name="ownerCountry"
-            type="text"
-            value={data.ownerCountry}
-            placeholder="Country"
-            className=" border-0 cursor-pointer placeholder:italic"
-            onChange={(event) => handleChangeData(event)}
-          />
-          {err.ownerCountry ? (
-            <p className="text-xs text-red-500">{err.ownerCountry}</p>
-          ) : null}
-        </div>
-      </div>
-      <div className="flex justify-between">
-        <div className=" w-1/3 space-y-2">
-          <div>Bill to :</div>
-          <Input
-            name="clientName"
-            value={data.clientName}
-            type="text"
-            placeholder="Your Client Name / Company"
-            className=" border-0 cursor-pointer placeholder:italic"
-            onChange={(event) => handleChangeData(event)}
-          />
-          {err.clientName ? (
-            <p className="text-xs text-red-500">{err.clientName}</p>
-          ) : null}
-          <Input
-            name="clientAddress"
-            value={data.clientAddress}
-            type="text"
-            placeholder="Address, City"
-            className=" border-0 cursor-pointer placeholder:italic"
-            onChange={(event) => handleChangeData(event)}
-          />
-          {err.clientAddress ? (
-            <p className="text-xs text-red-500">{err.clientAddress}</p>
-          ) : null}
-          <Input
-            name="clientCountry"
-            value={data.clientCountry}
-            type="text"
-            placeholder="Country"
-            className=" border-0 cursor-pointer placeholder:italic"
-            onChange={(event) => handleChangeData(event)}
-          />
-          {err.clientCountry ? (
-            <p className="text-xs text-red-500">{err.clientCountry}</p>
-          ) : null}
-        </div>
-        <div className=" inline-block align-middle w-2/5 space-y-4 mr-10">
-          <div></div>
-          <div className="flex space-x-4 w-full align-middle">
-            <span className=" inline-block w-2/3 align-middle">
-              Inv. Number&nbsp;:
-            </span>
-            <Input
-              name="invoiceNumber"
-              value={data.invoiceNumber}
-              type="text"
-              placeholder="Invoice Number"
-              className="w-full border-0 cursor-pointer size placeholder:italic justify-end"
-              onChange={(event) => handleChangeData(event)}
-            />
-            {err.invoiceNumber ? (
-              <p className="text-xs text-red-500">{err.invoiceNumber}</p>
-            ) : null}
-          </div>
-          <div className="flex space-x-4 w-full">
-            <p className="w-2/3">Inv. Date&nbsp;:</p>
-            <Input
-              name="invoiceDate"
-              value={data.invoiceDate}
-              type="date"
-              placeholder="13/11/2023"
-              className="w-full  cursor-pointer py-0 justify-end"
-              onChange={(event) => handleChangeData(event)}
-            />
-            {err.invoiceDate ? (
-              <p className="text-xs text-red-500">{err.invoiceDate}</p>
-            ) : null}
-          </div>
-          <div className="flex space-x-4 w-full">
-            <p className="w-2/3">Due Date&nbsp;:</p>
-            <Input
-              name="dueDate"
-              value={data.dueDate}
-              type="date"
-              placeholder="20/11/2023"
-              className="w-full  cursor-pointer py-0 justify-end"
-              onChange={(event) => handleChangeData(event)}
-            />
-            {err.dueDate ? (
-              <p className="text-xs text-red-500">{err.dueDate}</p>
-            ) : null}
-          </div>
-        </div>
-      </div>
-      <div className=" space-y-4">
-        <Table>
-          <TableCaption></TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Item Description</TableHead>
-              <TableHead>Price per Unit</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.invoiceFields.map(
-              ({ itemDescription, price, qty, amount }, i) => {
-                return (
-                  <TableRow className="" key={i}>
-                    <TableCell>
-                      {" "}
-                      <input
-                        onChange={(event) => handleChange(i, event)}
-                        name="itemDescription"
-                        type="text"
-                        value={itemDescription}
-                        placeholder=" Your item here "
-                        className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
-                      />
-                      {err.invoiceFields[i].itemDescription ? (
-                        <p className="text-xs text-red-500">
-                          {err.invoiceFields[i].itemDescription}
-                        </p>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      {" "}
-                      <input
-                        onChange={(event) => handleChange(i, event)}
-                        name="qty"
-                        type="number"
-                        value={qty}
-                        placeholder=" 25 "
-                        className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
-                      />
-                      {err.invoiceFields[i].qty ? (
-                        <p className="text-xs text-red-500">
-                          {err.invoiceFields[i].qty}
-                        </p>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      {" "}
-                      <input
-                        onChange={(event) => handleChange(i, event)}
-                        name="price"
-                        type="number"
-                        value={price}
-                        placeholder=" 4 "
-                        className="w-full text-md h-fit py-2 placeholder-slate-600"
-                      />
-                      {err.invoiceFields[i].price ? (
-                        <p className="text-xs text-red-500">
-                          {err.invoiceFields[i].price}
-                        </p>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {" "}
-                      <input
-                        name="amount"
-                        type="number"
-                        value={amount}
-                        placeholder="0"
-                        className=" read-only:bg-slate-400 text-right placeholder-slate-600"
-                      />
-                    </TableCell>
-                    <Button onClick={() => handleRemoveInvoice(i)}>X</Button>
-                  </TableRow>
-                );
-              }
+                  className="flex flex-col items-center justify-center w-full h-24 px-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+                >
+                  <div className="flex flex-col items-center justify-center py-6 space-y-2">
+                    <img src="/asset/upload-icon.svg" width={20} alt="" />
+                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="font-semibold">Click to upload</span> or
+                      drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      SVG, PNG, JPG or GIF (MAX. 800x400px)
+                    </p>
+                  </div>
+                  <Input
+                    type="file"
+                    id="dropzone-file"
+                    className="hidden"
+                    onChange={handleFeturedImgChange}
+                  />
+                </label>
+              </div>
             )}
-          </TableBody>
-        </Table>
-        <div className="grid grid-cols-4 gap-4 justify-end w-full">
-          <div className=" col-span-2"></div>
-          <div className="text-end text-xl font-semibold">TOTAL :</div>
-          <div className="text-center text-xl font-semibold">{total}</div>
+          </div>
+          <h2 className="px-10 text-4xl font-bold align-middle">INVOICE</h2>
         </div>
-        <div className="space-x-2">
-          <Button onClick={addItems}>Add Item</Button>
-          <Button onClick={createPdf}>Generate PDF</Button>
-          {url && <div>{url}</div>}
+        <div className="">
+          <div className=" w-1/3 space-y-2">
+            <Input
+              name="ownerName"
+              type="text"
+              value={data.ownerName}
+              placeholder="Your Name / Your Company"
+              className=" border-0 cursor-pointer placeholder:italic"
+              onChange={(event) => handleChangeData(event)}
+            />
+            {err.ownerName ? (
+              <p className="text-xs text-red-500">{err.ownerName}</p>
+            ) : null}
+            <Input
+              name="ownerAddress"
+              type="text"
+              value={data.ownerAddress}
+              placeholder="Address, City"
+              className=" border-0 cursor-pointer placeholder:italic"
+              onChange={(event) => handleChangeData(event)}
+            />
+            {err.ownerAddress ? (
+              <p className="text-xs text-red-500">{err.ownerAddress}</p>
+            ) : null}
+            <Input
+              name="ownerCountry"
+              type="text"
+              value={data.ownerCountry}
+              placeholder="Country"
+              className=" border-0 cursor-pointer placeholder:italic"
+              onChange={(event) => handleChangeData(event)}
+            />
+            {err.ownerCountry ? (
+              <p className="text-xs text-red-500">{err.ownerCountry}</p>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <div className=" w-1/3 space-y-2">
+            <div>Bill to :</div>
+            <Input
+              name="clientName"
+              value={data.clientName}
+              type="text"
+              placeholder="Your Client Name / Company"
+              className=" border-0 cursor-pointer placeholder:italic"
+              onChange={(event) => handleChangeData(event)}
+            />
+            {err.clientName ? (
+              <p className="text-xs text-red-500">{err.clientName}</p>
+            ) : null}
+            <Input
+              name="clientAddress"
+              value={data.clientAddress}
+              type="text"
+              placeholder="Address, City"
+              className=" border-0 cursor-pointer placeholder:italic"
+              onChange={(event) => handleChangeData(event)}
+            />
+            {err.clientAddress ? (
+              <p className="text-xs text-red-500">{err.clientAddress}</p>
+            ) : null}
+            <Input
+              name="clientCountry"
+              value={data.clientCountry}
+              type="text"
+              placeholder="Country"
+              className=" border-0 cursor-pointer placeholder:italic"
+              onChange={(event) => handleChangeData(event)}
+            />
+            {err.clientCountry ? (
+              <p className="text-xs text-red-500">{err.clientCountry}</p>
+            ) : null}
+          </div>
+          <div className=" inline-block align-middle w-2/5 space-y-4 mr-10">
+            <div></div>
+            <div className="flex space-x-4 w-full align-middle">
+              <span className=" inline-block w-2/3 align-middle">
+                Inv. Number&nbsp;:
+              </span>
+              <div className="w-full align-middle">
+                <Input
+                  name="invoiceNumber"
+                  value={data.invoiceNumber}
+                  type="text"
+                  placeholder="Invoice Number"
+                  className="w-full border-0 cursor-pointer size placeholder:italic justify-end"
+                  onChange={(event) => handleChangeData(event)}
+                />
+                {err.invoiceNumber ? (
+                  <p className="text-xs text-red-500">{err.invoiceNumber}</p>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex space-x-4 w-full">
+              <p className="w-2/3">Inv. Date&nbsp;:</p>
+              <div className="w-full align-middle">
+                <Input
+                  name="invoiceDate"
+                  value={data.invoiceDate}
+                  type="date"
+                  placeholder="13/11/2023"
+                  className="w-full  cursor-pointer py-0 justify-end"
+                  onChange={(event) => handleChangeData(event)}
+                />
+                {err.invoiceDate ? (
+                  <p className="text-xs text-red-500">{err.invoiceDate}</p>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex space-x-4 w-full">
+              <p className="w-2/3">Due Date&nbsp;:</p>
+              <div className="w-full align-middle">
+                <Input
+                  name="dueDate"
+                  value={data.dueDate}
+                  type="date"
+                  placeholder="20/11/2023"
+                  className="w-full  cursor-pointer py-0 justify-end"
+                  onChange={(event) => handleChangeData(event)}
+                />
+                {err.dueDate ? (
+                  <p className="text-xs text-red-500">{err.dueDate}</p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className=" space-y-4">
+          <Table>
+            <TableCaption></TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Item Description</TableHead>
+                <TableHead>Price per Unit</TableHead>
+                <TableHead>Quantity</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.invoiceFields.map(
+                ({ itemDescription, price, qty, amount }, i) => {
+                  return (
+                    <TableRow className="" key={i}>
+                      <TableCell>
+                        {" "}
+                        <input
+                          onChange={(event) => handleChange(i, event)}
+                          name="itemDescription"
+                          type="text"
+                          value={itemDescription}
+                          placeholder=" Your item here "
+                          className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
+                        />
+                        {err.invoiceFields[i].itemDescription ? (
+                          <p className="text-xs text-red-500">
+                            {err.invoiceFields[i].itemDescription}
+                          </p>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        {" "}
+                        <input
+                          onChange={(event) => handleChange(i, event)}
+                          name="price"
+                          type="number"
+                          value={price}
+                          placeholder=" 25 "
+                          className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
+                        />
+                        {err.invoiceFields[i].price ? (
+                          <p className="text-xs text-red-500">
+                            {err.invoiceFields[i].price}
+                          </p>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        {" "}
+                        <input
+                          onChange={(event) => handleChange(i, event)}
+                          name="qty"
+                          type="number"
+                          value={qty}
+                          placeholder=" 4 "
+                          className="w-full text-md h-fit py-2 placeholder-slate-600"
+                        />
+                        {err.invoiceFields[i].qty ? (
+                          <p className="text-xs text-red-500">
+                            {err.invoiceFields[i].qty}
+                          </p>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {" "}
+                        <input
+                          name="amount"
+                          type="number"
+                          value={amount}
+                          placeholder="0"
+                          className=" read-only:bg-slate-400 text-right placeholder-slate-600"
+                        />
+                      </TableCell>
+                      <Button onClick={() => handleRemoveInvoice(i)}>X</Button>
+                    </TableRow>
+                  );
+                }
+              )}
+            </TableBody>
+          </Table>
+          <div className="grid grid-cols-4 gap-4 justify-end w-full">
+            <div className=" col-span-2"></div>
+            <div className="text-end text-xl font-semibold">TOTAL :</div>
+            <div className="text-center text-xl font-semibold">{total}</div>
+          </div>
+          <div className="space-x-2">
+            <Button onClick={addItems}>Add Item</Button>
+            <Button onClick={createPdf}>Generate PDF</Button>
+            {url && <div>{url}</div>}
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
