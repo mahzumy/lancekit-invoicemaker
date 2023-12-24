@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:push": "npx prisma db push --schema=./src/db/prisma/schema.prisma",
-    "db:studio": "npx prisma studio --schema=./src/db/prisma/schema.prisma"
+    "lint": "next lint"
+  },
+  "prisma": {
+    "schema": "./src/db/prisma/schema.prisma"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
