@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { signOut, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/invoiceMaker/ui/input";
 import { Button } from "@/components/invoiceMaker/ui/button";
@@ -36,7 +35,7 @@ const dataSchema = z.object({
       itemDescription: z.string().min(1, "Descrtiptions"),
       price: z.string().min(1, "Price"),
       qty: z.string().min(1, "Qty"),
-      amount: z.number().min(1),
+      amount: z.string().min(1),
     })
   ),
 });
@@ -64,6 +63,7 @@ interface IError {
 type TData = z.infer<typeof dataSchema>;
 
 export const InvoiceGenerator = () => {
+  const [colorPdf, setColorPdf] = useState("#5468ff");
   const [url, setUrl] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [total, setTotal] = useState(0);
@@ -103,7 +103,7 @@ export const InvoiceGenerator = () => {
         itemDescription: "",
         price: "",
         qty: "",
-        amount: 0,
+        amount: "",
       },
     ],
   });
@@ -120,25 +120,44 @@ export const InvoiceGenerator = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const values = [...data.invoiceFields];
-    const temp: any = [...err.invoiceFields];
+    const tempErr: any = [...err.invoiceFields];
     if (event.target.name === "itemDescription") {
       values[index].itemDescription = event.target.value;
-      temp[index].itemDescription = "";
+      tempErr[index].itemDescription = "";
     } else if (event.target.name === "qty") {
-      values[index].qty = event.target.value;
-      values[index].amount =
-        Number(values[index].qty) * Number(values[index].price);
-      temp[index].qty = "";
+      const sanitizedValue = event.target.value.replace(/[^0-9]/g, "");
+      const formattedValue = new Intl.NumberFormat("id-ID").format(
+        Number(sanitizedValue)
+      );
+      values[index].qty = formattedValue;
+      const amountTemp =
+        Number(values[index].qty.replace(/\./g, "")) *
+        Number(values[index].price.replace(/\./g, ""));
+      values[index].amount = new Intl.NumberFormat("id-ID").format(
+        Number(amountTemp)
+      );
+      tempErr[index].qty = "";
     } else if (event.target.name === "price") {
-      values[index].price = event.target.value;
-      values[index].amount =
-        Number(values[index].qty) * Number(values[index].price);
-      temp[index].price = "";
+      const sanitizedValue = event.target.value.replace(/[^0-9]/g, "");
+      const formattedValue = new Intl.NumberFormat("id-ID").format(
+        Number(sanitizedValue)
+      );
+      values[index].price = formattedValue;
+      const amountTemp =
+        Number(values[index].qty.replace(/\./g, "")) *
+        Number(values[index].price.replace(/\./g, ""));
+      values[index].amount = new Intl.NumberFormat("id-ID").format(
+        Number(amountTemp)
+      );
+      tempErr[index].price = "";
     }
     setData({ ...data, invoiceFields: values });
-    setErr({ ...err, invoiceFields: temp });
+    setErr({ ...err, invoiceFields: tempErr });
     setTotal(
-      data.invoiceFields.reduce((sum: number, item) => sum + item.amount, 0)
+      data.invoiceFields.reduce(
+        (sum: number, item) => sum + Number(item.amount.replace(/\./g, "")),
+        0
+      )
     );
     //console.log(invoiceFields);
   };
@@ -151,7 +170,7 @@ export const InvoiceGenerator = () => {
       itemDescription: "",
       price: "",
       qty: "",
-      amount: 0,
+      amount: "",
     });
     addErrorFiled.push({
       itemDescription: "",
@@ -311,16 +330,24 @@ export const InvoiceGenerator = () => {
               },
             ],
             ...data.invoiceFields.map(
-              ({ itemDescription, qty, price, amount }) => [
-                itemDescription,
-                qty,
-                price,
-                amount,
+              ({ itemDescription, price, qty, amount }) => [
+                { text: itemDescription, style: "tableCellLeft" },
+                { text: qty, style: "tableCellCenter" },
+                { text: `${price},-`, style: "tableCellCenter" },
+                { text: `${amount},-`, style: "tableCellRight" },
               ]
             ),
-            //[{text: 'Logo Design', style: 'tableCellLeft',}, {text: 1, style: 'tableCellCenter'}, {text: '3.000.000,-', style: 'tableCellCenter'}, {text:'3.000.000,-', style: 'tableCellRight'} ],
-            //[{text: 'Mockup Branding', style: 'tableCellLeft',}, {text: 10, style: 'tableCellCenter'}, {text: '5.00.000,-', style: 'tableCellCenter'}, {text:'5.000.000,-', style: 'tableCellRight'} ],
-            [{ text: "Total", colSpan: 3 }, {}, {}, total],
+            [
+              { text: "Total", colSpan: 3 },
+              {},
+              {},
+              {
+                text: `${new Intl.NumberFormat("id-ID").format(
+                  Number(total)
+                )},-`,
+                style: "tableCellRight",
+              },
+            ],
           ],
         },
         layout: {
@@ -395,14 +422,14 @@ export const InvoiceGenerator = () => {
         fontSize: 13,
         bold: true,
         lineHeight: 2,
-        color: "#2563eb",
+        color: colorPdf,
       },
       h3Italic: {
         fontSize: 13,
         bold: true,
         lineHeight: 2,
         italics: true,
-        color: "#2563eb",
+        color: colorPdf,
       },
       billToName: {
         fontSize: 16,
@@ -416,7 +443,7 @@ export const InvoiceGenerator = () => {
         bold: true,
         color: "white",
         fontSize: 13,
-        fillColor: "#2563eb",
+        fillColor: colorPdf,
         alignment: "center",
       },
       tableCellLeft: {
@@ -486,32 +513,19 @@ export const InvoiceGenerator = () => {
     setFeatureImg("");
   };
 
-  const { data: session } = useSession();
-
   useEffect(() => {
     setIsClient(true);
     setTotal(
-      data.invoiceFields.reduce((sum: number, item) => sum + item.amount, 0)
+      data.invoiceFields.reduce(
+        (sum: number, item) => sum + Number(item.amount.replace(/\./g, "")),
+        0
+      )
     );
   }, [data.invoiceFields]);
   if (!isClient) return null;
 
   return (
     <main>
-      <div className="flex justify-between p-4">
-        <div className="text-lg font-bold">Lancekit.</div>
-        <div className="flex items-center gap-4">
-          <div>{session?.user?.name}</div>
-          <img
-            alt=""
-            src={session?.user?.image as string}
-            width={40}
-            height={40}
-            className="rounded-full"
-          />
-          <Button onClick={() => signOut()}>Logout</Button>
-        </div>
-      </div>
       <div className=" justify-center mx-auto w-8/12 border shadow mb-10 px-10 py-20 space-y-10">
         <div className="flex justify-between">
           <div className=" px-5">
@@ -727,7 +741,7 @@ export const InvoiceGenerator = () => {
                         <input
                           onChange={(event) => handleChange(i, event)}
                           name="price"
-                          type="number"
+                          type="text"
                           value={price}
                           placeholder=" 25 "
                           className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
@@ -743,7 +757,7 @@ export const InvoiceGenerator = () => {
                         <input
                           onChange={(event) => handleChange(i, event)}
                           name="qty"
-                          type="number"
+                          type="text"
                           value={qty}
                           placeholder=" 4 "
                           className="w-full text-md h-fit py-2 placeholder-slate-600"
@@ -758,7 +772,7 @@ export const InvoiceGenerator = () => {
                         {" "}
                         <input
                           name="amount"
-                          type="number"
+                          type="text"
                           value={amount}
                           placeholder="0"
                           className=" read-only:bg-slate-400 text-right placeholder-slate-600"
@@ -774,12 +788,51 @@ export const InvoiceGenerator = () => {
           <div className="grid grid-cols-4 gap-4 justify-end w-full">
             <div className=" col-span-2"></div>
             <div className="text-end text-xl font-semibold">TOTAL :</div>
-            <div className="text-center text-xl font-semibold">{total}</div>
+            <div className="text-center text-xl font-semibold">
+              {new Intl.NumberFormat("id-ID").format(Number(total))}
+            </div>
           </div>
           <div className="space-x-2">
             <Button onClick={addItems}>Add Item</Button>
             <Button onClick={createPdf}>Generate PDF</Button>
             {url && <div>{url}</div>}
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <div className="m-4 p-2 rounded-md border-2 border-black w-fit">
+            <div className="text-center">PDF Themes</div>
+            <div className="flex gap-1">
+              <Button
+                variant={"roundedFull"}
+                className="bg-rose-600 hover:bg-red-600/90"
+                onClick={() => {
+                  setColorPdf("#e11d48");
+                  // console.log(color);
+                }}
+              >
+                {colorPdf === "#e11d48" ? "✔" : ""}
+              </Button>
+              <Button
+                variant={"roundedFull"}
+                className="bg-blue-800 hover:bg-blue-800/90"
+                onClick={() => {
+                  setColorPdf("#5468ff");
+                  // console.log(color);
+                }}
+              >
+                {colorPdf === "#5468ff" ? "✔" : ""}
+              </Button>
+              <Button
+                variant={"roundedFull"}
+                className="bg-slate-800 hover:bg-slate-800/90"
+                onClick={() => {
+                  setColorPdf("#0f172a");
+                  // console.log(color);
+                }}
+              >
+                {colorPdf === "#0f172a" ? "✔" : ""}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
