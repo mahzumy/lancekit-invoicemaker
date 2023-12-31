@@ -40,7 +40,7 @@ export const Login = () => {
               <p className="text-lg">
                 &ldquo;It is essential to have good tools, but it is also essential that the tools should be used in the right way&rdquo;
               </p>
-              <footer className="text-sm">Wallace D. Wattles</footer>
+              <footer className="text-sm pb-2">Wallace D. Wattles</footer>
             </blockquote>
               </div>
           </div>
