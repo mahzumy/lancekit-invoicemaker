@@ -14,11 +14,8 @@ import {
   TableRow,
 } from "@/components/invoiceMaker/ui/table";
 
-import pdfMake from "pdfmake/build/pdfmake";
-import pdfFonts from "pdfmake/build/vfs_fonts";
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
-import { TDocumentDefinitions } from "pdfmake/interfaces";
 import Image from "next/image";
+import InvoicePDF from "./pdfmake/invoicePDF";
 
 const dataSchema = z.object({
   ownerName: z.string().min(1, "Owner Name"),
@@ -64,6 +61,7 @@ type TData = z.infer<typeof dataSchema>;
 
 export const InvoiceGenerator = () => {
   const [colorPdf, setColorPdf] = useState("#5468ff");
+  const [dateString, setDateString] = useState("");
   const [url, setUrl] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [total, setTotal] = useState(0);
@@ -110,6 +108,9 @@ export const InvoiceGenerator = () => {
 
   const handleChangeData = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    if (name === "invoiceDate") {
+      setDateString(formatDate(value));
+    }
     setData({ ...data, [name]: value });
     setErr({ ...err, [name]: "" });
     //console.log(data)
@@ -194,281 +195,16 @@ export const InvoiceGenerator = () => {
     setErr({ ...err, invoiceFields: errors });
   };
 
-  const docDefinition: TDocumentDefinitions = {
-    content: [
-      {
-        columns: [
-          [
-            {
-              text: "Name: " + data.clientName,
-              bold: true,
-            },
-            { text: "Address: " + data.clientAddress },
-            { text: "Country: " + data.clientCountry },
-            //{ text: data.}
-          ],
-          [
-            {
-              text: "Invoice Date: " + data.invoiceDate,
-              alignment: "right",
-            },
-            {
-              text: "Invoice Number:" + data.invoiceNumber,
-              alignment: "right",
-            },
-          ],
-        ],
-      },
-      {
-        text: "Order Details",
-        //style: 'sectionHeader'
-      },
-      {
-        table: {
-          headerRows: 1,
-          widths: ["*", "auto", "auto", "auto"],
-          body: [
-            ["Product", "Price", "Quantity", "Amount"],
-            ...data.invoiceFields.map(
-              ({ itemDescription, qty, price, amount }) => [
-                itemDescription,
-                qty,
-                price,
-                amount,
-              ]
-            ),
-            //[{ text: 'Total Amount', colSpan: 3 }, {}, {}, this.invoice.products.reduce((sum, p) => sum + (p.qty * p.price), 0).toFixed(2)]
-          ],
-        },
-      },
-    ],
-  };
-
-  const dd: TDocumentDefinitions = {
-    content: [
-      {
-        alignment: "justify",
-        columns: [
-          {
-            image: "lancekitlogo",
-            width: 150,
-          },
-          {
-            text: "INVOICE",
-            style: "titleInvoice",
-          },
-        ],
-      },
-      { text: data.ownerName, style: "ownerName" },
-      { text: data.ownerAddress + ", " + data.ownerCountry, style: "pBreak1" },
-      { text: "Bill to:", style: "h3Italic" },
-      {
-        columns: [
-          {
-            width: "*",
-            text: data.clientName,
-            style: "billToName",
-          },
-          {
-            width: 90,
-            text: "Invoice Date : ",
-            style: "pRight",
-          },
-          {
-            width: 70,
-            text: data.invoiceDate,
-            style: "pRight",
-          },
-        ],
-      },
-      {
-        alignment: "justify",
-        columns: [
-          {
-            width: "*",
-            text: data.clientAddress + ", " + data.clientCountry,
-            style: "pBreakItalic",
-          },
-          {
-            width: 90,
-            text: "Invoice Number :",
-            style: "pRight",
-          },
-          {
-            width: 70,
-            text: data.invoiceNumber,
-            style: "pRight",
-          },
-        ],
-      },
-      {
-        style: "tableExample",
-        table: {
-          headerRows: 1,
-          widths: ["*", "auto", 100, "*"],
-          body: [
-            [
-              {
-                text: "Product",
-                style: "tableHeader",
-                border: [false, false, false, false],
-              },
-              {
-                text: "Quantity",
-                style: "tableHeader",
-                border: [true, false, false, false],
-              },
-              {
-                text: "Price per Unit",
-                style: "tableHeader",
-                border: [true, false, false, false],
-              },
-              {
-                text: "Amount",
-                style: "tableHeader",
-                border: [true, false, false, false],
-              },
-            ],
-            ...data.invoiceFields.map(
-              ({ itemDescription, price, qty, amount }) => [
-                { text: itemDescription, style: "tableCellLeft" },
-                { text: qty, style: "tableCellCenter" },
-                { text: `${price},-`, style: "tableCellCenter" },
-                { text: `${amount},-`, style: "tableCellRight" },
-              ]
-            ),
-            [
-              { text: "Total", colSpan: 3 },
-              {},
-              {},
-              {
-                text: `${new Intl.NumberFormat("id-ID").format(
-                  Number(total)
-                )},-`,
-                style: "tableCellRight",
-              },
-            ],
-          ],
-        },
-        layout: {
-          hLineWidth: function (i: number, node) {
-            return i === 0 || i === node.table.body.length ? 1 : 1;
-          },
-          vLineWidth: function (i: number, node) {
-            return i === 0 || i === node.table.widths?.length ? 1 : 1;
-          },
-          hLineColor: function (i: number, node) {
-            return i === 0 || i === node.table.body.length
-              ? "#bfdbfe"
-              : "#bfdbfe";
-          },
-          vLineColor: function (i: number, node) {
-            return i === 0 || i === node.table.widths?.length
-              ? "#bfdbfe"
-              : "#bfdbfe";
-          },
-          paddingTop: function (i: number, node) {
-            return 20;
-          },
-          paddingLeft: function (i: number, node) {
-            return 14;
-          },
-          paddingRight: function (i: number, node) {
-            return 14;
-          },
-          // hLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
-          // vLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
-          // paddingLeft: function(i, node) { return 4; },
-          // paddingRight: function(i, node) { return 4; },
-          // paddingTop: function(i, node) { return 2; },
-          // paddingBottom: function(i, node) { return 2; },
-          // fillColor: function (rowIndex, node, columnIndex) { return null; }
-        },
-      },
-    ],
-    defaultStyle: {
-      columnGap: 100,
-      lineHeight: 2.5,
-    },
-    styles: {
-      titleInvoice: {
-        fontSize: 28,
-        bold: true,
-        alignment: "right",
-      },
-      ownerName: {
-        fontSize: 16,
-        bold: true,
-        lineHeight: 1.4,
-      },
-      pLeft: {
-        alignment: "left",
-        lineHeight: 1.4,
-      },
-      pBreak1: {
-        alignment: "left",
-        lineHeight: 4,
-      },
-      pBreakItalic: {
-        alignment: "left",
-        lineHeight: 4,
-        italics: true,
-      },
-      pRight: {
-        alignment: "right",
-        lineHeight: 1.6,
-      },
-      h3: {
-        fontSize: 13,
-        bold: true,
-        lineHeight: 2,
-        color: colorPdf,
-      },
-      h3Italic: {
-        fontSize: 13,
-        bold: true,
-        lineHeight: 2,
-        italics: true,
-        color: colorPdf,
-      },
-      billToName: {
-        fontSize: 16,
-        bold: true,
-        lineHeight: 1.4,
-      },
-      tableExample: {
-        margin: [0, 5, 0, 15],
-      },
-      tableHeader: {
-        bold: true,
-        color: "white",
-        fontSize: 13,
-        fillColor: colorPdf,
-        alignment: "center",
-      },
-      tableCellLeft: {
-        alignment: "left",
-      },
-      tableCellCenter: {
-        alignment: "center",
-      },
-      tableCellRight: {
-        alignment: "right",
-      },
-    },
-    images: {
-      //lancekitlogo: 'https://i.imgur.com/7fMUo7k.png',
-      lancekitlogo: featuredImg
-        ? featuredImg
-        : "https://i.imgur.com/wfARkq0.png",
-    },
-    pageMargins: [40, 60, 40, 60],
-  };
-
   const createPdf = () => {
     try {
       const isValidData = dataSchema.parse(data);
-      const pdfGenerator = pdfMake.createPdf(dd);
+      const pdfGenerator = InvoicePDF(
+        data,
+        dateString,
+        total,
+        colorPdf,
+        featuredImg
+      );
       pdfGenerator.getBlob((blob) => {
         const url: string = URL.createObjectURL(blob);
         setUrl(url);
@@ -511,6 +247,22 @@ export const InvoiceGenerator = () => {
 
   const removeLogo = () => {
     setFeatureImg("");
+  };
+
+  const formatDate = (inputDate: string): string => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    };
+    const dateObject = new Date(inputDate);
+    const formattedDate = dateObject.toLocaleDateString("en-US", options);
+    // Membuat array dari elemen tanggal yang diformat
+    const dateElements = formattedDate.split(" ");
+    // Menggabungkan elemen tanggal dalam urutan yang diinginkan
+    const outputDate = `${dateElements[1]} ${dateElements[0]}, ${dateElements[2]}`;
+
+    return outputDate;
   };
 
   useEffect(() => {
