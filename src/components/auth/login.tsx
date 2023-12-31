@@ -29,22 +29,6 @@ export const Login = () => {
 
   return (
     <main>
-      <div className="md:hidden">
-        <Image
-          src="/asset/freelance-laptop.jpg"
-          width={1280}
-          height={843}
-          alt=""
-          className="block dark:hidden"
-        />
-        <Image
-          src="/asset/freelance-laptop.jpg"
-          width={1280}
-          height={843}
-          alt=""
-          className="hidden dark:block"
-        />
-      </div>
       <div className="container relative hidden h-[800px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
           <div className="absolute inset-0 bg-zinc-900" style={{ backgroundImage: 'url("/asset/freelance-laptop.jpg")', backgroundSize: 'cover', backgroundPosition: 'center' }}/>
