@@ -67,7 +67,7 @@ export const Login = () => {
               Create an account
             </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your email below to create your account
+              Login with your Google Account below
             </p>
           </div>
             <Button onClick={handleGoogleLogin} variant="default">
