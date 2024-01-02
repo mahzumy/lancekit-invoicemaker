@@ -10,14 +10,35 @@ interface IinvoiceField {
   amount: string;
 }
 
-export default function InvoicePDF(
-  data: any,
-  dateString: string,
-  total: number,
-  colorPdf: string,
-  featuredImg: string
-) {
+interface IParams {
+  data: any;
+  total: number;
+  colorPdf: string;
+  featuredImg: string;
+}
+
+export const InvoicePDF = ({ data, total, colorPdf, featuredImg }: IParams) => {
+  const formatDate = (inputDate: string): string => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    };
+    const dateObject = new Date(inputDate);
+    const formattedDate = dateObject.toLocaleDateString("en-US", options);
+    // Membuat array dari elemen tanggal yang diformat
+    const dateElements = formattedDate.split(" ");
+    // Menggabungkan elemen tanggal dalam urutan yang diinginkan
+    const outputDate = `${dateElements[1]} ${dateElements[0]}, ${dateElements[2]}`;
+
+    return outputDate;
+  };
+
   const dd: TDocumentDefinitions = {
+    footer: {
+      text: "Lancekit",
+      style: "pFooter",
+    },
     content: [
       {
         alignment: "justify",
@@ -54,7 +75,7 @@ export default function InvoicePDF(
                 border: [false, false, false, false],
               },
               {
-                text: `${dateString}`,
+                text: `${formatDate(data.invoiceDate)}`,
                 style: "pRight",
                 border: [false, false, false, false],
               },
@@ -237,6 +258,13 @@ export default function InvoicePDF(
       tableCellRight: {
         alignment: "right",
       },
+      pFooter: {
+        alignment: "right",
+        marginTop: 40,
+        marginRight: 10,
+        lineHeight: 1,
+        italics: true,
+      },
     },
     images: {
       //lancekitlogo: 'https://i.imgur.com/7fMUo7k.png',
@@ -247,4 +275,4 @@ export default function InvoicePDF(
     pageMargins: [40, 60, 40, 60],
   };
   return pdfMake.createPdf(dd);
-}
+};
