@@ -3,273 +3,38 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/invoiceMaker/ui/input";
 import { Button } from "@/components/invoiceMaker/ui/button";
-import { z } from "zod";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/invoiceMaker/ui/table";
+import { InvoiceTable } from "./invoiceTable/invoiceTable";
 
 import Image from "next/image";
-import InvoicePDF from "./pdfmake/invoicePDF";
-
-const dataSchema = z.object({
-  ownerName: z.string().min(1, "Owner Name"),
-  ownerAddress: z.string().min(1, "Owner Address"),
-  ownerCountry: z.string().min(1, "Owner Country"),
-  clientName: z.string().min(1),
-  clientAddress: z.string().min(1),
-  clientCountry: z.string().min(1),
-  invoiceNumber: z.string().min(1),
-  invoiceDate: z.string().min(1),
-  dueDate: z.string().min(1),
-  invoiceFields: z.array(
-    z.object({
-      itemDescription: z.string().min(1, "Descrtiptions"),
-      price: z.string().min(1, "Price"),
-      qty: z.string().min(1, "Qty"),
-      amount: z.string().min(1),
-    })
-  ),
-});
-
-interface IinvoiceField {
-  itemDescription: string;
-  price: string;
-  qty: string;
-  amount: string;
-}
-
-interface IError {
-  ownerName: string;
-  ownerAddress: string;
-  ownerCountry: string;
-  clientName: string;
-  clientAddress: string;
-  clientCountry: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-  dueDate: string;
-  invoiceFields: IinvoiceField[];
-}
-
-type TData = z.infer<typeof dataSchema>;
+import { useInvoice } from "./hooks/useInvoice";
 
 export const InvoiceGenerator = () => {
-  const [colorPdf, setColorPdf] = useState("#5468ff");
-  const [dateString, setDateString] = useState("");
-  const [url, setUrl] = useState("");
   const [isClient, setIsClient] = useState(false);
-  const [total, setTotal] = useState(0);
-  const [featuredImg, setFeatureImg] = useState("");
-  const [err, setErr] = useState<IError>({
-    ownerName: "",
-    ownerAddress: "",
-    ownerCountry: "",
-    clientName: "",
-    clientAddress: "",
-    clientCountry: "",
-    invoiceNumber: "",
-    invoiceDate: "",
-    dueDate: "",
-    invoiceFields: [
-      {
-        itemDescription: "",
-        price: "",
-        qty: "",
-        amount: "",
-      },
-    ],
-  });
 
-  const [data, setData] = useState<TData>({
-    ownerName: "",
-    ownerAddress: "",
-    ownerCountry: "",
-    clientName: "",
-    clientAddress: "",
-    clientCountry: "",
-    invoiceNumber: "",
-    invoiceDate: "",
-    dueDate: "",
-    invoiceFields: [
-      {
-        itemDescription: "",
-        price: "",
-        qty: "",
-        amount: "",
-      },
-    ],
-  });
-
-  const handleChangeData = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    if (name === "invoiceDate") {
-      setDateString(formatDate(value));
-    }
-    setData({ ...data, [name]: value });
-    setErr({ ...err, [name]: "" });
-    //console.log(data)
-  };
-
-  const handleChange = (
-    index: number,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const values = [...data.invoiceFields];
-    const tempErr: any = [...err.invoiceFields];
-    if (event.target.name === "itemDescription") {
-      values[index].itemDescription = event.target.value;
-      tempErr[index].itemDescription = "";
-    } else if (event.target.name === "qty") {
-      const sanitizedValue = event.target.value.replace(/[^0-9]/g, "");
-      const formattedValue = new Intl.NumberFormat("id-ID").format(
-        Number(sanitizedValue)
-      );
-      values[index].qty = formattedValue;
-      const amountTemp =
-        Number(values[index].qty.replace(/\./g, "")) *
-        Number(values[index].price.replace(/\./g, ""));
-      values[index].amount = new Intl.NumberFormat("id-ID").format(
-        Number(amountTemp)
-      );
-      tempErr[index].qty = "";
-    } else if (event.target.name === "price") {
-      const sanitizedValue = event.target.value.replace(/[^0-9]/g, "");
-      const formattedValue = new Intl.NumberFormat("id-ID").format(
-        Number(sanitizedValue)
-      );
-      values[index].price = formattedValue;
-      const amountTemp =
-        Number(values[index].qty.replace(/\./g, "")) *
-        Number(values[index].price.replace(/\./g, ""));
-      values[index].amount = new Intl.NumberFormat("id-ID").format(
-        Number(amountTemp)
-      );
-      tempErr[index].price = "";
-    }
-    setData({ ...data, invoiceFields: values });
-    setErr({ ...err, invoiceFields: tempErr });
-    setTotal(
-      data.invoiceFields.reduce(
-        (sum: number, item) => sum + Number(item.amount.replace(/\./g, "")),
-        0
-      )
-    );
-    //console.log(invoiceFields);
-  };
-
-  const addItems = () => {
-    const addField = [...data.invoiceFields];
-    const addErrorFiled = [...err.invoiceFields];
-
-    addField.push({
-      itemDescription: "",
-      price: "",
-      qty: "",
-      amount: "",
-    });
-    addErrorFiled.push({
-      itemDescription: "",
-      price: "",
-      qty: "",
-      amount: "",
-    });
-    setData({ ...data, invoiceFields: addField });
-    setErr({ ...err, invoiceFields: addErrorFiled });
-  };
-
-  const handleRemoveInvoice = (index: number) => {
-    const values = [...data.invoiceFields];
-    const errors = [...err.invoiceFields];
-    if (values.length === 1 || errors.length === 1) {
-      return false;
-    }
-    values.splice(index, 1);
-    errors.splice(index, 1);
-    setData({ ...data, invoiceFields: values });
-    setErr({ ...err, invoiceFields: errors });
-  };
-
-  const createPdf = () => {
-    try {
-      const isValidData = dataSchema.parse(data);
-      const pdfGenerator = InvoicePDF(
-        data,
-        dateString,
-        total,
-        colorPdf,
-        featuredImg
-      );
-      pdfGenerator.getBlob((blob) => {
-        const url: string = URL.createObjectURL(blob);
-        setUrl(url);
-      });
-      //pdfGenerator.download()
-      //console.log(invoiceFields)
-    } catch (error) {
-      const newError = error as z.ZodError;
-      const newErr: any = { ...err };
-      const temp: any = [...err.invoiceFields];
-
-      newError.issues.map((e) => {
-        const fieldName = e.path[0];
-
-        if (fieldName !== "invoiceFields") {
-          newErr[fieldName] = e.message;
-        } else {
-          const index: any = e.path[1];
-          const field: any = e.path[2];
-          temp[index][field] = e.message;
-        }
-        setErr({ ...newErr, invoiceFields: temp });
-      });
-      // console.log(err);
-    }
-  };
-
-  const handleFeturedImgChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files: any = event.target.files;
-    const file: string = files[0];
-
-    const fileReader: any = new FileReader();
-    fileReader.onload = () => {
-      setFeatureImg(fileReader.result);
-    };
-    fileReader.readAsDataURL(file);
-  };
-
-  const removeLogo = () => {
-    setFeatureImg("");
-  };
-
-  const formatDate = (inputDate: string): string => {
-    const options: Intl.DateTimeFormatOptions = {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    };
-    const dateObject = new Date(inputDate);
-    const formattedDate = dateObject.toLocaleDateString("en-US", options);
-    // Membuat array dari elemen tanggal yang diformat
-    const dateElements = formattedDate.split(" ");
-    // Menggabungkan elemen tanggal dalam urutan yang diinginkan
-    const outputDate = `${dateElements[1]} ${dateElements[0]}, ${dateElements[2]}`;
-
-    return outputDate;
-  };
+  const {
+    handleChangeData,
+    handleChange,
+    addItems,
+    handleRemoveInvoice,
+    handleFeturedImgChange,
+    removeLogo,
+    createPdf,
+    data,
+    featuredImg,
+    err,
+    total,
+    url,
+    colorPdf,
+    setTotal,
+    setColorPdf,
+  } = useInvoice();
 
   useEffect(() => {
     setIsClient(true);
     setTotal(
       data.invoiceFields.reduce(
-        (sum: number, item) => sum + Number(item.amount.replace(/\./g, "")),
+        (sum: number, item: any) =>
+          sum + Number(item.amount.replace(/\./g, "")),
         0
       )
     );
@@ -457,93 +222,13 @@ export const InvoiceGenerator = () => {
           </div>
         </div>
         <div className=" space-y-4">
-          <Table>
-            <TableCaption></TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item Description</TableHead>
-                <TableHead>Price per Unit</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.invoiceFields.map(
-                ({ itemDescription, price, qty, amount }, i) => {
-                  return (
-                    <TableRow className="" key={i}>
-                      <TableCell>
-                        {" "}
-                        <input
-                          onChange={(event) => handleChange(i, event)}
-                          name="itemDescription"
-                          type="text"
-                          value={itemDescription}
-                          placeholder=" Your item here "
-                          className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
-                        />
-                        {err.invoiceFields[i].itemDescription ? (
-                          <p className="text-xs text-red-500">
-                            {err.invoiceFields[i].itemDescription}
-                          </p>
-                        ) : null}
-                      </TableCell>
-                      <TableCell>
-                        {" "}
-                        <input
-                          onChange={(event) => handleChange(i, event)}
-                          name="price"
-                          type="text"
-                          value={price}
-                          placeholder=" 25 "
-                          className="w-full text-md h-fit py-2 placeholder-slate-600 px-2"
-                        />
-                        {err.invoiceFields[i].price ? (
-                          <p className="text-xs text-red-500">
-                            {err.invoiceFields[i].price}
-                          </p>
-                        ) : null}
-                      </TableCell>
-                      <TableCell>
-                        {" "}
-                        <input
-                          onChange={(event) => handleChange(i, event)}
-                          name="qty"
-                          type="text"
-                          value={qty}
-                          placeholder=" 4 "
-                          className="w-full text-md h-fit py-2 placeholder-slate-600"
-                        />
-                        {err.invoiceFields[i].qty ? (
-                          <p className="text-xs text-red-500">
-                            {err.invoiceFields[i].qty}
-                          </p>
-                        ) : null}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {" "}
-                        <input
-                          name="amount"
-                          type="text"
-                          value={amount}
-                          placeholder="0"
-                          className=" read-only:bg-slate-400 text-right placeholder-slate-600"
-                        />
-                      </TableCell>
-                      <Button onClick={() => handleRemoveInvoice(i)}>X</Button>
-                    </TableRow>
-                  );
-                }
-              )}
-            </TableBody>
-          </Table>
-          <div className="grid grid-cols-4 gap-4 justify-end w-full">
-            <div className=" col-span-2"></div>
-            <div className="text-end text-xl font-semibold">TOTAL :</div>
-            <div className="text-center text-xl font-semibold">
-              {new Intl.NumberFormat("id-ID").format(Number(total))}
-            </div>
-          </div>
+          <InvoiceTable
+            handleChange={handleChange}
+            handleRemoveInvoice={handleRemoveInvoice}
+            data={data}
+            err={err}
+            total={total}
+          />
           <div className="space-x-2">
             <Button onClick={addItems}>Add Item</Button>
             <Button onClick={createPdf}>Generate PDF</Button>
@@ -559,7 +244,6 @@ export const InvoiceGenerator = () => {
                 className="bg-rose-600 hover:bg-red-600/90"
                 onClick={() => {
                   setColorPdf("#e11d48");
-                  // console.log(color);
                 }}
               >
                 {colorPdf === "#e11d48" ? "✔" : ""}
@@ -569,7 +253,6 @@ export const InvoiceGenerator = () => {
                 className="bg-blue-800 hover:bg-blue-800/90"
                 onClick={() => {
                   setColorPdf("#5468ff");
-                  // console.log(color);
                 }}
               >
                 {colorPdf === "#5468ff" ? "✔" : ""}
@@ -579,7 +262,6 @@ export const InvoiceGenerator = () => {
                 className="bg-slate-800 hover:bg-slate-800/90"
                 onClick={() => {
                   setColorPdf("#0f172a");
-                  // console.log(color);
                 }}
               >
                 {colorPdf === "#0f172a" ? "✔" : ""}
