@@ -36,7 +36,7 @@ export const InvoicePDF = ({ data, total, colorPdf, featuredImg }: IParams) => {
 
   const dd: TDocumentDefinitions = {
     footer: {
-      text: "Lancekit",
+      text: "Invoice by Lancekit",
       style: "pFooter",
     },
     content: [
@@ -261,6 +261,7 @@ export const InvoicePDF = ({ data, total, colorPdf, featuredImg }: IParams) => {
       pFooter: {
         alignment: "right",
         marginTop: 40,
+        marginBottom: 40,
         marginRight: 10,
         lineHeight: 1,
         italics: true,
