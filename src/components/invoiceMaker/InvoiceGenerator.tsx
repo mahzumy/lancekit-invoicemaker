@@ -231,7 +231,7 @@ export const InvoiceGenerator = () => {
               total={total}
             />
             <div className="space-x-2">
-              <Button onClick={addItems}>Add Item</Button>
+              <Button onClick={addItems} className=" text-md">Add Item</Button>
               {url && <div>{url}</div>}
             </div>
           </div>
@@ -270,7 +270,7 @@ export const InvoiceGenerator = () => {
             </div>
           </div>
         </div>
-        <div className="w-2/12">
+        <div className="w-2/12 py-5">
             <div className="space-x-2 px-10">
               <Button onClick={createPdf} className=" py-10 text-xl w-full">Generate PDF</Button>
               {url && <div>{url}</div>}
