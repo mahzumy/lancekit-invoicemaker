@@ -110,7 +110,8 @@ export const InvoiceTable = ({
           )}
         </TableBody>
       </Table>
-      <div className="grid grid-cols-4 gap-4 justify-end w-full">
+      <hr />
+      <div className="grid grid-cols-4 gap-4 justify-end w-full pt-10">
         <div className=" col-span-2"></div>
         <div className="text-end text-xl font-semibold">TOTAL :</div>
         <div className="text-center text-xl font-semibold">

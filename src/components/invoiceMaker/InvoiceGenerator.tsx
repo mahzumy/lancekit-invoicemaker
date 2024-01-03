@@ -43,8 +43,8 @@ export const InvoiceGenerator = () => {
 
   return (
     <main className=" bg-slate-100 py-16">
-      <div className=" flex">
-        <div className=" bg-white justify-center mx-auto w-7/12 border shadow mb-10 px-10 py-20 space-y-10 rounded-xl">
+      <div className=" flex justify-center space-x-4 mx-auto">
+        <div className=" bg-white justify-center w-7/12 border shadow mb-10 px-10 py-20 space-y-10 rounded-xl">
           <div className="flex justify-between">
             <div className=" px-5">
               {/* <img src="/asset/LanceKit Logo.svg" width={180} alt="" /> */}
@@ -232,7 +232,6 @@ export const InvoiceGenerator = () => {
             />
             <div className="space-x-2">
               <Button onClick={addItems}>Add Item</Button>
-              <Button onClick={createPdf}>Generate PDF</Button>
               {url && <div>{url}</div>}
             </div>
           </div>
@@ -271,8 +270,11 @@ export const InvoiceGenerator = () => {
             </div>
           </div>
         </div>
-        <div className="w-3/12">
-          Hey
+        <div className="w-2/12">
+            <div className="space-x-2 px-10">
+              <Button onClick={createPdf} className=" py-10 text-xl w-full">Generate PDF</Button>
+              {url && <div>{url}</div>}
+            </div>
         </div>
       </div>
     </main>
